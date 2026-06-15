@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Caretaker Dashboard | Helping Hands</title>
+  <link rel="stylesheet" href="/style.css">
+
+  <!-- Leaflet CSS -->
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"
+  />
+
+  <style>
+    .map {
+      width: 100%;
+      height: 250px;
+      border-radius: 12px;
+      margin-top: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <header class="site-header">
+    <div class="nav-row">
+      <a class="logo" href="/">
+        <span class="logo-mark">🤝</span>
+        <span class="logo-text">Helping Hands</span>
+      </a>
+    </div>
+  </header>
+
+  <section class="stripe-card" style="margin-top:48px;">
+    <h1 class="hero-title">Welcome back, {{ user.name }}! 👋</h1>
+    <ul style="font-size:1.15em;line-height:1.6;color:var(--deep-red);margin:28px 0 0 0;padding:0;list-style:none;">
+      <li><strong>Email:</strong> {{ user.email }}</li>
+      <li><strong>Phone:</strong> {{ user.phone }}</li>
+    </ul>
+  </section>
+
+  <br>
+
+  <!-- CURRENT OPEN REQUESTS -->
+  <section class="stripe">
+    <h2 class="hero-title" style="font-size:2em;"> Requests</h2>
+    {% if requests and requests|length > 0 %}
+        <div class="stripe-grid">
+        {% for request in requests %}
+          <div class="stripe-card">
+            <strong>{{ request.title }}</strong><br>
+            {{ request.category }}<br>
+            <strong>Time:</strong> {{ request.time }}<br>
+            <strong>Description:</strong> {{ request.description }}<br>
+            <div id="map-open-{{ loop.index }}" class="map"></div>
+            <br>
+            <form action="/accept_request" method="post">
+              <button type="submit" class="btn primary" name="id" value="{{ request.id }}">Accept</button>
+            </form>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p>No current open requests.</p>
+    {% endif %}
+  </section>
+
+  <br>
+
+  <!-- PENDING REQUESTS -->
+  <section class="stripe">
+    <h2 class="hero-title" style="font-size:2em;">⏳ Pending Requests</h2>
+    {% if accepted and accepted|length > 0 %}
+      <div class="stripe-grid">
+        {% for req in accepted %}
+          <div class="stripe-card">
+            <strong>{{ req.title }}</strong><br>
+            {{ req.category }}<br>
+            <strong>Time:</strong> {{ req.time }}<br>
+            <strong>Description:</strong> {{ req.description }}<br>
+            <div id="map-pending-{{ loop.index }}" class="map"></div>
+            {% if req.senior_name %}
+              <br>
+              <strong>Senior:</strong> 
+              <button onclick="loadSeniorDetails({{ req.senior_id }}, this)">
+                {{ req.senior_name }}
+              </button>
+            {% endif %}
+            <br>
+            <strong>Status:</strong> {{ req.status|title }}<br>
+            <form action="/done" method="post">
+              <button type="submit" class="btn primary" name="id" value="{{ req.id }}">Done</button>
+            </form>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p>No pending requests.</p>
+    {% endif %}
+  </section>
+
+  <br>
+
+  <div style="text-align:right;">
+    <a href="/logout" class="btn primary logout-button">Logout</a>
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      if (typeof L === "undefined") {
+        console.error("Leaflet did not load");
+        return;
+      }
+
+      // Maps for open requests
+      {% for req in requests %}
+        {% if req.lat and req.lng %}
+          const mapOpen{{ loop.index }} = L.map('map-open-{{ loop.index }}').setView([{{ req.lat }}, {{ req.lng }}], 15);
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+          }).addTo(mapOpen{{ loop.index }});
+          L.marker([{{ req.lat }}, {{ req.lng }}]).addTo(mapOpen{{ loop.index }}).bindPopup("{{ req.title }}");
+        {% endif %}
+      {% endfor %}
+
+      // Maps for pending requests
+      {% for req in accepted %}
+        {% if req.lat and req.lng %}
+          const mapPending{{ loop.index }} = L.map('map-pending-{{ loop.index }}').setView([{{ req.lat }}, {{ req.lng }}], 15);
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(mapPending{{ loop.index }});
+            L.marker([{{ req.lat }}, {{ req.lng }}]).addTo(mapPending{{ loop.index }}).bindPopup("{{ req.title }}");
+          {% endif %}
+        {% endfor %}
+      });
+
+      // Senior details popup
+      async function loadSeniorDetails(seniorId, btn) {
+        const response = await fetch('/get_senior', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: seniorId })
+        });
+        const data = await response.json();
+        if (data.error) { alert(data.error); return; }
+
+        const details = btn.nextElementSibling;
+        details.innerHTML = `
+          <div class="stripe-card">
+            <h3>${data.name}</h3>
+            <p><strong>Age:</strong> ${data.age}</p>
+            <p><strong>Email:</strong> ${data.email}</p>
+            <p><strong>Phone:</strong> ${data.phone}</p>
+          </div>
+        `;
+      }
+    </script>
+  </div>
+</body>
+</html>
+

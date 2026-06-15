@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Senior Dashboard | Helping Hands</title>
+  <link rel="stylesheet" href="/style.css">
+
+  <!-- Leaflet CSS -->
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"
+  />
+
+  <style>
+    .map {
+      width: 100%;
+      height: 250px;
+      border-radius: 12px;
+      margin-top: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="site-header">
+      <div class="nav-row">
+        <a class="logo" href="/">
+          <span class="logo-mark">🤝</span>
+          <span class="logo-text">Helping Hands</span>
+        </a>
+      </div>
+    </header>
+
+    <!-- Profile Info -->
+    <section class="stripe-card" style="margin-top:48px;">
+      <h1 class="hero-title">Welcome back, {{ user.name }}! 👋</h1>
+      <ul style="font-size:1.15em;line-height:1.6;color:var(--deep-red);margin:28px 0 0 0;padding:0;list-style:none;">
+        <li><strong>Email:</strong> {{ user.email }}</li>
+        <li><strong>Phone:</strong> {{ user.phone }}</li>
+      </ul>
+    </section>
+
+    <br>
+
+    <!-- Your Requests -->
+    <section class="stripe">
+      <h2 class="hero-title" style="font-size:2em;"> Requests</h2>
+      <button type="button" class="btn primary" onclick="window.open('/request_help','_self')">Request Help</button>
+      {% if requests and requests|length > 0 %}
+        <div class="stripe-grid">
+        {% for request in requests %}
+          <div class="stripe-card">
+            <strong>{{ request.title }}</strong><br>
+            {{ request.category }}<br>
+            <strong>Time:</strong> {{ request.time }}<br>
+            <strong>Description:</strong> {{ request.description }}<br>
+            <div id="map-req-{{ loop.index }}" class="map"></div>
+            <strong>Status:</strong> {{ request.status|title }}
+         </div>
+         {% endfor %}
+         </div>
+      {% else %}
+        <p>No requests. Click the button to send one!</p>
+      {% endif %}
+
+    <br>
+
+    <!-- Completed Requests -->
+    <section class="stripe">
+      <h2 class="hero-title" style="font-size:2em;">📋 Your Completed Requests</h2>
+      {% if accepted and accepted|length > 0 %}
+          <div class="stripe-grid">
+          {% for accept in accepted %}
+              <div class="stripe-card">
+              <strong>{{ accept.title }}</strong><br>
+              {{ accept.category }}<br>
+              <strong>Time:</strong> {{ accept.time }}<br>
+              <strong>Description:</strong> {{ accept.description }}<br>
+              <div id="map-comp-{{ loop.index }}" class="map"></div>
+              {% if accept.caretaker_name %}
+                  <br>
+                  <strong>Caretaker:</strong>
+                  <button onclick="loadCaretakerDetails({{ accept.caretaker_id }}, this)">
+                     {{ accept.caretaker_name }}
+                  </button>
+                  <div class="caretaker-details"></div>
+              {% endif %}
+              <br>
+              <strong>Status:</strong> {{ accept.status|title }}
+              <form action="/done" method="post">
+                <button type="submit" class="btn primary" name="id" value="{{ accept.id }}">Done</button>
+              </form>
+            </div>
+          {% endfor %}
+          </div>
+      {% else %}
+        <p>You have no accepted requests yet.</p>
+      {% endif %}
+    </section>
+
+    <div style="text-align:right;">
+      <a href="/logout" class="btn primary logout-button">Logout</a>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        if (typeof L === "undefined") {
+          console.error("Leaflet did not load");
+          return;
+        }
+
+        // Requests maps
+        {% for request in requests %}
+          {% if request.lat and request.lng %}
+            const mapReq{{ loop.index }} = L.map('map-req-{{ loop.index }}').setView([{{ request.lat }}, {{ request.lng }}], 15);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+              attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(mapReq{{ loop.index }});
+            L.marker([{{ request.lat }}, {{ request.lng }}])
+              .addTo(mapReq{{ loop.index }})
+              .bindPopup("{{ request.title }}")
+              .openPopup();
+          {% endif %}
+        {% endfor %}
+
+        // Completed maps
+        {% for accept in accepted %}
+          {% if accept.lat and accept.lng %}
+            const mapComp{{ loop.index }} = L.map('map-comp-{{ loop.index }}').setView([{{ accept.lat }}, {{ accept.lng }}], 15);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+              attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(mapComp{{ loop.index }});
+            L.marker([{{ accept.lat }}, {{ accept.lng }}])
+              .addTo(mapComp{{ loop.index }})
+              .bindPopup("{{ accept.title }}")
+              .openPopup();
+          {% endif %}
+        {% endfor %}
+      });
+
+      // Caretaker details popup
+      async function loadCaretakerDetails(caretakerId, btn) {
+        const response = await fetch('/get_caretaker', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: caretakerId })
+        });
+        const data = await response.json();
+        if (data.error) { alert(data.error); return; }
+
+        const details = btn.nextElementSibling;
+        details.innerHTML = `
+          <div class="stripe-card">
+            <h3>${data.name}</h3>
+            <p><strong>Age:</strong> ${data.age}</p>
+            <p><strong>Email:</strong> ${data.email}</p>
+            <p><strong>Phone:</strong> ${data.phone}</p>
+          </div>
+        `;
+      }
+    </script>
+  </div>
+</body>
+</html>

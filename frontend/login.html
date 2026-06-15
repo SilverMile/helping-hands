@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>Login — Helping Hands</title>
+		<link rel="stylesheet" href="style.css">
+	</head>
+	<body>
+		<header class="site-header">
+			<div class="container nav-row">
+				<a href="{{ url_for('home') }}" class="logo"><span class="logo-mark">🤝</span><span class="logo-text">Helping Hands</span></a>
+			</div>
+		</header>
+
+		<main class="container">
+			<section class="auth-page" style="padding:72px 0">
+				<div class="auth-card">
+					<h1>Welcome back</h1>
+					<p class="muted">Sign in to request help or manage your account.</p>
+
+					<div class="form">
+						<p class="muted">Sign in as:</p>
+						<a class="btn primary" href="{{ url_for('login_senior') }}">Senior</a>
+						<a class="btn ghost" href="{{ url_for('login_caretaker') }}">Caretaker</a>
+					</div>
+
+					<p class="small">New here? <a href="{{ url_for('signup') }}">Create an account</a></p>
+				</div>
+			</section>
+		</main>
+	</body>
+</html>

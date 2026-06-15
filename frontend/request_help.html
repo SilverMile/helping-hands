@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Request Help | Helping Hands</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="site-header">
+    <div class="container nav-row">
+      <a class="logo" href="/dashboard">
+        <span class="logo-mark">🤝</span>
+        <span class="logo-text">Helping Hands</span>
+      </a>
+
+      <nav class="nav">
+        <ul class="nav-list">
+          <li><a href="/dashboard">Dashboard</a></li>
+          <li><a href="/request_help">Request Help</a></li>
+          <li><a href="/set_location">Set Location</a></li>
+          <li><a href="/logout">Logout</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Request Help Section -->
+  <section id="request-help">
+    <div class="container">
+      <div class="auth-card">
+        <h1>Request Help</h1>
+        <p class="muted">Fill out the details below to request help near your location.</p>
+
+        <form id="request-help-form" method="POST" action="/request_help">
+          
+          <!-- Title -->
+          <label for="title">Request Title</label>
+          <input type="text" id="title" name="title" placeholder="e.g. Need groceries" required>
+
+          <!-- Category -->
+          <label for="category">Type of Help</label>
+          <select id="category" name="category" required>
+            <option value="" disabled selected>Select one...</option>
+            <option value="groceries">Groceries / Shopping</option>
+            <option value="cleaning">Cleaning Assistance</option>
+            <option value="medical">Medical Support</option>
+            <option value="transport">Transportation</option>
+            <option value="other">Other</option>
+          </select>
+
+          <!-- Description -->
+          <label for="description">Description</label>
+          <textarea id="description" name="description" rows="4" placeholder="Describe what you need help with..." required></textarea>
+
+          <!-- Time -->
+          <label for="time">Preferred Time</label>
+          <input type="datetime-local" id="time" name="time" required>
+
+          <!-- Submit Button -->
+          <button type="submit" class="btn primary">Submit Request</button>
+
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="container footer-row">
+      <p>&copy; 2025 Helping Hands</p>
+      <div class="footer-nav">
+        <a href="/privacy">Privacy</a>
+        <a href="/terms">Terms</a>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>
